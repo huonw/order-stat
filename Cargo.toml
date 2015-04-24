@@ -1,0 +1,12 @@
+[package]
+name = "order-stat"
+version = "0.1.0"
+authors = ["Huon Wilson <dbau.pp@gmail.com>"]
+
+[features]
+experimental = []
+
+[dev-dependencies]
+rand = "0.3"
+quickcheck = "0.2"
+quickcheck_macros = "0.2"
