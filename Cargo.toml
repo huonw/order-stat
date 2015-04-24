@@ -3,6 +3,17 @@ name = "order-stat"
 version = "0.1.0"
 authors = ["Huon Wilson <dbau.pp@gmail.com>"]
 
+homepage = "https://github.com/huonw/order-stat"
+repository = "https://github.com/huonw/order-stat"
+documentation = "http://huonw.github.io/order-stat"
+license = "MIT/Apache-2.0"
+keywords = ["order-statistics", "partial-sort", "median-of-medians"]
+
+description = """
+Compute order statistics efficiently via the Floyd-Rivest algorithm
+and estimate a median via the median-of-medians algorithm.
+"""
+
 [features]
 experimental = []
 
