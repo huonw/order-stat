@@ -103,28 +103,8 @@ mod tests {
 }
 
 #[cfg(all(test, feature = "experimental"))]
-mod benchs {
+mod benches {
     extern crate test;
-    use rand::{XorShiftRng, Rng};
-    use super::select;
 
-    const N: usize = 2_000;
-
-    #[bench]
-    fn huge(b: &mut test::Bencher) {
-        let v = XorShiftRng::new_unseeded().gen_iter::<i32>().take(N).collect::<Vec<_>>();
-        b.iter(|| {
-            let mut w = v.clone();
-            select(&mut w, 1000);
-        });
-    }
-
-    #[bench]
-    fn huge_sort(b: &mut test::Bencher) {
-        let v = XorShiftRng::new_unseeded().gen_iter::<i32>().take(N).collect::<Vec<_>>();
-        b.iter(|| {
-            let mut w = v.clone();
-            w.sort();
-        });
-    }
+    make_benches!(|m, mut v| super::select(&mut v, m));
 }

@@ -33,6 +33,11 @@
 
 #[cfg(test)] extern crate rand;
 #[cfg(test)] extern crate quickcheck;
+#[cfg(all(test, feature = "experimental"))] extern crate test;
+
+#[cfg(all(test, feature = "experimental"))]
+#[macro_use]
+mod benches;
 
 mod floyd_rivest;
 mod quickselect;
