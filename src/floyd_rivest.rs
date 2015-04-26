@@ -30,30 +30,30 @@ fn select_<T: Ord>(array: &mut [T], mut left: usize, mut right: usize, k: usize)
         let mut i = left + 1;
         let mut j = right - 1;
         array.swap(left, k);
-        let t = if array[left] >= array[right] {
+        let t_idx = if array[left] >= array[right] {
             array.swap(left, right);
             right
         } else {
             left
         };
 
+        // need to cancel the borrow (but the assertion above ensures this doesn't alias)
+        let t = &array[t_idx] as *const _;
+        unsafe {
+            while *array.get_unchecked(i) < *t { i += 1 }
+            while *array.get_unchecked(j) > *t { j -= 1 }
+        }
+
         if i < j {
             // i < j, and i and j move toward each other, so this
             // assertion ensures that all indexing here is in-bounds.
             assert!(j < array.len());
-            // t doesn't alias i or j, and won't alias any in future.
-            assert!(t < i || j < t);
-            // need to cancel the borrow (but the assertion above ensures this doesn't alias)
-            let t = &array[t] as *const _;
 
             // FIXME: this unsafe code *should* be unnecessary: the
             // assertions above mean that LLVM could theoretically
             // optimise out the bounds checks, but it doesn't seem to
             // at the moment (2015-04-25).
             unsafe {
-                while *array.get_unchecked(i) < *t { i += 1 }
-                while *array.get_unchecked(j) > *t { j -= 1 }
-
                 while i < j {
                     ptr::swap(array.get_unchecked_mut(i),
                               array.get_unchecked_mut(j));
@@ -65,7 +65,7 @@ fn select_<T: Ord>(array: &mut [T], mut left: usize, mut right: usize, k: usize)
             }
         }
 
-        if left == t {
+        if left == t_idx {
             array.swap(left, j);
         } else {
             j += 1;
