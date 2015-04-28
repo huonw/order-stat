@@ -8,8 +8,8 @@ before_script:
 script:
   - |
       tc cargo build &&
-      tc --only nightly cargo test &&
-      tc --only nightly cargo bench &&
+      tc cargo test &&
+      tc cargo bench &&
       tc cargo doc
 after_success:
   - tc --only beta doc-upload
