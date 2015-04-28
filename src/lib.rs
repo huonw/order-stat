@@ -29,13 +29,13 @@
 //! println!("{} is close to the median", order_stat::median_of_medians(&mut v).1);
 //! ```
 
-#![cfg_attr(all(test, feature = "experimental"), feature(test))]
+#![cfg_attr(all(test, feature = "unstable"), feature(test))]
 
 #[cfg(test)] extern crate rand;
 #[cfg(test)] extern crate quickcheck;
-#[cfg(all(test, feature = "experimental"))] extern crate test;
+#[cfg(all(test, feature = "unstable"))] extern crate test;
 
-#[cfg(all(test, feature = "experimental"))]
+#[cfg(all(test, feature = "unstable"))]
 #[macro_use]
 mod benches;
 

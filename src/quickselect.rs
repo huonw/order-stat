@@ -87,7 +87,7 @@ mod tests {
     }
 }
 
-#[cfg(all(test, feature = "experimental"))]
+#[cfg(all(test, feature = "unstable"))]
 mod benches {
     make_benches!(|m, mut v| super::select(&mut v, m));
 }

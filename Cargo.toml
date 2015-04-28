@@ -15,7 +15,7 @@ and estimate a median via the median-of-medians algorithm.
 """
 
 [features]
-experimental = []
+unstable = []
 
 [dev-dependencies]
 rand = "0.3"

@@ -103,7 +103,7 @@ mod tests {
     }
 }
 
-#[cfg(all(test, feature = "experimental"))]
+#[cfg(all(test, feature = "unstable"))]
 mod benches {
     extern crate test;
     use rand::{XorShiftRng, Rng};
