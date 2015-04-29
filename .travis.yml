@@ -7,12 +7,12 @@ before_script:
   - ln -s ./travis-cargo/travis-cargo.py tc
 script:
   - |
-      tc cargo build &&
-      tc cargo test &&
-      tc cargo bench &&
+      ./tc cargo build &&
+      ./tc cargo test &&
+      ./tc cargo bench &&
       tc cargo doc
 after_success:
-  - tc --only beta doc-upload
+  - ./tc --only beta doc-upload
 
 env:
   global:
