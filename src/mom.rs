@@ -1,3 +1,4 @@
+use std::{cmp, mem};
 use std::cmp::Ordering;
 
 /// Calculate an approximate median of `array`.
@@ -56,11 +57,22 @@ pub fn median_of_medians_by<T, F>(array: &mut [T], mut cmp: F) -> (usize, &mut T
         let median = array.len() / 2;
         return (median, super::kth_by(array, median, cmp))
     }
-    let num_medians = array.len() / 5;
+    let num_medians = (array.len() + 4) / 5;
     for i in 0..num_medians {
         let start = 5 * i;
-        let idx = median5(&array[start..start+5], &mut cmp);
-        array.swap(i, start + idx);
+        let trailing = array.len() - start;
+        let idx = if trailing < 5 {
+            let elem = super::kth_by(&mut array[start..], trailing / 2, &mut cmp) as *mut _ as usize;
+
+            // compute the index of that element (zero sized types
+            // don't matter what index they end up, they're all at the
+            // same location and hence indistinguishable).
+            let start = array.as_ptr() as usize;
+            (elem - start) / cmp::max(1, mem::size_of::<T>())
+        } else {
+            start + median5(&array[start..start+5], &mut cmp)
+        };
+        array.swap(i, idx);
     }
     let idx = num_medians / 2;
     (idx, super::kth_by(&mut array[..num_medians], idx, cmp))
@@ -136,6 +148,14 @@ mod tests {
         let (_, &mut median) = median_of_medians(&mut x);
         assert!(30 <= median);
         assert!(median <= 70);
+    }
+
+    #[test]
+    fn include_trailing() {
+        // there was a bug with this vector of length 14 (!== 0 (mod
+        // 5)).
+        let mut v = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0];
+        assert_eq!(*median_of_medians(&mut v).1, 0)
     }
 }
 
