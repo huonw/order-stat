@@ -1,14 +1,19 @@
 use std::{cmp, ptr};
+use std::cmp::Ordering;
 
-pub fn select<T: Ord>(array: &mut [T], k: usize) {
+pub fn select<T, F>(array: &mut [T], k: usize, mut f: F)
+    where F: FnMut(&T, &T) -> cmp::Ordering
+{
     let r = array.len() - 1;
-    select_(array, 0, r, k)
+    select_(array, &mut f, 0, r, k)
 }
 
 const A: usize = 600;
 const B: f32 = 0.5;
 
-fn select_<T: Ord>(array: &mut [T], mut left: usize, mut right: usize, k: usize) {
+fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize, k: usize)
+    where F: FnMut(&T, &T) -> cmp::Ordering
+{
     let array = array;
     while right > left {
         if right - left > A {
@@ -24,13 +29,13 @@ fn select_<T: Ord>(array: &mut [T], mut left: usize, mut right: usize, k: usize)
             let new_left = cmp::max(left, inner as usize);
             let new_right = cmp::min(right, (inner + s) as usize);
 
-            select_(array, new_left, new_right, k)
+            select_(array, cmp, new_left, new_right, k)
         }
 
         let mut i = left + 1;
         let mut j = right - 1;
         array.swap(left, k);
-        let t_idx = if array[left] >= array[right] {
+        let t_idx = if cmp(&array[left], &array[right]) != cmp::Ordering::Less {
             array.swap(left, right);
             right
         } else {
@@ -40,8 +45,8 @@ fn select_<T: Ord>(array: &mut [T], mut left: usize, mut right: usize, k: usize)
         // need to cancel the borrow (but the assertion above ensures this doesn't alias)
         let t = &array[t_idx] as *const _;
         unsafe {
-            while *array.get_unchecked(i) < *t { i += 1 }
-            while *array.get_unchecked(j) > *t { j -= 1 }
+            while cmp(&*array.get_unchecked(i), &*t) == Ordering::Less { i += 1 }
+            while cmp(&*array.get_unchecked(j), &*t) == Ordering::Greater { j -= 1 }
         }
 
         if i < j {
@@ -59,8 +64,8 @@ fn select_<T: Ord>(array: &mut [T], mut left: usize, mut right: usize, k: usize)
                               array.get_unchecked_mut(j));
                     i += 1;
                     j -= 1;
-                    while *array.get_unchecked(i) < *t { i += 1 }
-                    while *array.get_unchecked(j) > *t { j -= 1 }
+                    while cmp(&*array.get_unchecked(i), &*t) == Ordering::Less { i += 1 }
+                    while cmp(&*array.get_unchecked(j), &*t) == Ordering::Greater { j -= 1 }
                 }
             }
         }
@@ -89,7 +94,7 @@ mod tests {
                 return TestResult::discard();
             }
 
-            select(&mut x, k);
+            select(&mut x, k, Ord::cmp);
             let element = x[k];
             x.sort();
             TestResult::from_bool(element == x[k])
@@ -101,7 +106,7 @@ mod tests {
     fn smoke() {
         for k in 0..4 {
             let mut array = [2, 3, 0, 1];
-            select(&mut array, k);
+            select(&mut array, k, Ord::cmp);
             assert_eq!(array[k], k);
         }
     }
@@ -113,7 +118,7 @@ mod tests {
             let v: Vec<_> = rng.gen_iter::<i32>().take(length).collect();
             for _ in 0..10 {
                 let mut w = v.clone();
-                select(&mut w, rng.gen_range(0, length));
+                select(&mut w, rng.gen_range(0, length), Ord::cmp);
             }
         }
     }
@@ -123,5 +128,5 @@ mod tests {
 mod benches {
     extern crate test;
 
-    make_benches!(|m, mut v| super::select(&mut v, m));
+    make_benches!(|m, mut v| super::select(&mut v, m, Ord::cmp));
 }

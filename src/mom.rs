@@ -1,8 +1,13 @@
+use std::cmp::Ordering;
+
 /// Calculate an approximate median of `array`.
 ///
 /// The return value is the index/reference to some value of `array`
 /// that is guaranteed to lie between the 30th and 70th percentiles of
-/// the values in `array`.
+/// the values in `array`. That is, it both is not smaller and not
+/// larger than than at least 30% of the elements of `array`.
+///
+/// This is equivalent to `median_of_medians_by(array, Ord::cmp)`.
 ///
 /// # Panics
 ///
@@ -12,27 +17,58 @@
 ///
 /// ```rust
 /// // the numbers 0, 1, ..., 100.
-/// let mut x = (0..101).rev().collect::<Vec<_>>();
-/// let (_, &mut median) = order_stat::median_of_medians(&mut x);
+/// let mut v = (0..101).rev().collect::<Vec<_>>();
+/// let (_, &mut median) = order_stat::median_of_medians(&mut v);
 /// assert!(30 <= median);
 /// assert!(median <= 70);
 /// ```
 pub fn median_of_medians<T: Ord>(array: &mut [T]) -> (usize, &mut T) {
+    median_of_medians_by(array, Ord::cmp)
+}
+
+/// Calculate an approximate median of `array`, using the ordering
+/// defined by `cmp`.
+///
+/// The return value is the index/reference to some value of `array`
+/// that is guaranteed to lie between the 30th and 70th percentiles of
+/// the values in `array`. That is, the return value is such that
+/// `cmp` will return `Greater` for at most 70% of the elements and
+/// similarly will return `Less` for at most 70%.
+///
+/// # Panics
+///
+/// This panics if `array` is empty.
+///
+/// # Examples
+///
+/// ```rust
+/// // the numbers 0.0, 1.0, ..., 100.0.
+/// let mut v = (0..101).map(|x| x as f64).rev().collect::<Vec<_>>();
+///
+/// let (_, &mut median) = order_stat::median_of_medians_by(&mut v, |x, y| x.partial_cmp(y).unwrap());
+/// assert!(30.0 <= median);
+/// assert!(median <= 70.0);
+/// ```
+pub fn median_of_medians_by<T, F>(array: &mut [T], mut cmp: F) -> (usize, &mut T)
+    where F: FnMut(&T, &T) -> Ordering
+{
     if array.len() < 5 {
         let median = array.len() / 2;
-        return (median, super::kth(array, median))
+        return (median, super::kth_by(array, median, cmp))
     }
     let num_medians = array.len() / 5;
     for i in 0..num_medians {
         let start = 5 * i;
-        let idx = median5(&array[start..start+5]);
+        let idx = median5(&array[start..start+5], &mut cmp);
         array.swap(i, start + idx);
     }
     let idx = num_medians / 2;
-    (idx, super::kth(&mut array[..num_medians], idx))
+    (idx, super::kth_by(&mut array[..num_medians], idx, cmp))
 }
 
-fn median5<T: Ord>(array: &[T]) -> usize {
+fn median5<T, F>(array: &[T], cmp: &mut F) -> usize
+    where F: FnMut(&T, &T) -> Ordering
+{
     use std::mem;
 
     let array = array;
@@ -47,7 +83,7 @@ fn median5<T: Ord>(array: &[T]) -> usize {
     macro_rules! cmp {
         ($($a: ident, $b: ident;)*) => {
             $(
-                if $a < $b {
+                if cmp($a, $b) == Ordering::Less {
                     mem::swap(&mut $a, &mut $b)
                 }
                 )*
