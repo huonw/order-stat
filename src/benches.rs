@@ -28,4 +28,6 @@ macro_rules! make_benches {
     }
 }
 
-make_benches!(|_, mut v| v.sort());
+mod sort {
+    make_benches!(|_, mut v| v.sort());
+}

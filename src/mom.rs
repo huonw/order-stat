@@ -161,28 +161,13 @@ mod tests {
 
 #[cfg(all(test, feature = "unstable"))]
 mod benches {
-    extern crate test;
-    use rand::{XorShiftRng, Rng};
     use super::median_of_medians;
+    make_benches!(|_, mut v| median_of_medians(&mut v).0);
 
-    const N: usize = 20_000;
-
-    #[bench]
-    fn huge(b: &mut test::Bencher) {
-        let v = XorShiftRng::new_unseeded().gen_iter::<i32>().take(N).collect::<Vec<_>>();
-        b.iter(|| {
-            let mut w = v.clone();
-            median_of_medians(&mut w).0
+    mod exact {
+        make_benches!(|_, mut v| {
+            let n = v.len() / 2;
+            ::kth(&mut v, n) as *mut _
         });
     }
-
-    #[bench]
-    fn huge_exact(b: &mut test::Bencher) {
-        let v = XorShiftRng::new_unseeded().gen_iter::<i32>().take(N).collect::<Vec<_>>();
-        b.iter(|| {
-            let mut w = v.clone();
-            ::kth(&mut w, N / 2) as *mut _
-        });
-    }
-
 }
