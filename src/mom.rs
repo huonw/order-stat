@@ -57,7 +57,7 @@ pub fn median_of_medians_by<T, F>(array: &mut [T], mut cmp: F) -> (usize, &mut T
         let median = array.len() / 2;
         return (median, super::kth_by(array, median, cmp))
     }
-    let num_medians = (array.len() + 4) / 5;
+    let num_medians = (array.len() - 1 + 4) / 5;
     for i in 0..num_medians {
         let start = 5 * i;
         let trailing = array.len() - start;
@@ -74,7 +74,7 @@ pub fn median_of_medians_by<T, F>(array: &mut [T], mut cmp: F) -> (usize, &mut T
         };
         array.swap(i, idx);
     }
-    let idx = num_medians / 2;
+    let idx = (array.len() - 1) / 10;
     (idx, super::kth_by(&mut array[..num_medians], idx, cmp))
 }
 
@@ -133,7 +133,7 @@ mod tests {
             let (_, &mut median) = median_of_medians(&mut x);
             x.sort();
 
-            let thirty = x.len() * 3 / 10;
+            let thirty = (x.len() * 3 / 10).saturating_sub(1);
             let seventy = cmp::min((x.len() * 7 + 9) / 10, x.len() - 1);
             TestResult::from_bool(x[thirty] <= median && median <= x[seventy])
         }
@@ -154,6 +154,13 @@ mod tests {
         // 5)).
         let mut v = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0];
         assert_eq!(*median_of_medians(&mut v).1, 0)
+    }
+
+    #[test]
+    fn correct_sortings() {
+        // a bug where the -1 was included in a slice when it shouldn't be
+        let mut v = [0, 0, 0, 0, 0, -1];
+        assert_eq!(*median_of_medians(&mut v).1, 0);
     }
 }
 
