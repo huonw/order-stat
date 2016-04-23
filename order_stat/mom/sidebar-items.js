@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["median_of_medians","Calculate an approximate median of `array`."],["median_of_medians_by","Calculate an approximate median of `array`, using the ordering defined by `cmp`."]]});
