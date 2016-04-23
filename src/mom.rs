@@ -86,39 +86,37 @@ fn median5<T, F>(array: &[T], cmp: &mut F) -> usize
     let array = array;
     debug_assert!(array.len() == 5);
 
-    let mut a4 = &array[4];
-    let mut a3 = &array[3];
-    let mut a2 = &array[2];
-    let mut a1 = &array[1];
-    let mut a0 = &array[0];
+    // tracking the index through means we don't care about the
+    // addresses, allowing, e.g., the values to be loaded into
+    // registers and swapped directly.
+    // (This order means only one bounds check.)
+    let mut a4 = (4, &array[4]);
+    let mut a3 = (3, &array[3]);
+    let mut a2 = (2, &array[2]);
+    let mut a1 = (1, &array[1]);
+    let mut a0 = (0, &array[0]);
 
     macro_rules! cmp {
         ($($a: ident, $b: ident;)*) => {
             $(
-                if cmp($a, $b) == Ordering::Less {
+                if cmp($a.1, $b.1) == Ordering::Less {
                     mem::swap(&mut $a, &mut $b)
                 }
                 )*
         }
     }
 
+    // sorting network designed for instruction-level parallelism
     cmp! {
-        a1, a0;
-        a2, a0;
-        a3, a0;
-        a4, a0;
-        a2, a1;
-        a3, a1;
-        a4, a1;
-        a3, a2;
-        a4, a2;
+        a3, a4; a0, a1;
+        a2, a4;
+        a2, a3; a1, a4;
+        a0, a3;
+        a0, a2; a1, a3;
+        a1, a2;
     }
 
-    if mem::size_of::<T>() == 0 {
-        0
-    } else {
-        (a2 as *const _ as usize - array.as_ptr() as usize) / mem::size_of::<T>()
-    }
+    a2.0
 }
 
 #[cfg(test)]
