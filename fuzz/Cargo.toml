@@ -20,9 +20,9 @@ version = "1.3.2"
 members = ["."]
 
 [[bin]]
-name = "fuzz-kth"
+name = "fuzz_kth"
 path = "fuzz_targets/fuzz_kth.rs"
 
 [[bin]]
-name = "fuzz-mom"
+name = "fuzz_mom"
 path = "fuzz_targets/fuzz_mom.rs"
