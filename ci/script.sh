@@ -30,3 +30,19 @@ if [ ! -z "$COVERAGE" ]; then
     cargo coverage -v -m coverage-reports $features_param --kcov-build-location "$PWD/target"
     bash <(curl -s https://codecov.io/bash) -c -X gcov -X coveragepy -s coverage-reports
 fi
+
+
+if [ ! -z "$FUZZ" ]; then
+    if [ ! -z "$TARGET" ]; then
+        echo "cannot fuzz while cross compiling"
+        exit 1
+    fi
+
+    ./fuzzit.sh local-regression
+
+    branch=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+    if [ "$branch" = "master" ]; then
+        # a build on master, so let's update the long-running jobs
+        ./fuzzit.sh fuzzing
+    fi
+fi

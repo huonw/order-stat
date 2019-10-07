@@ -4,6 +4,10 @@ matrix:
 
   include:
       - rust: nightly
+        env: FUZZ=1
+        sudo: required
+
+      - rust: nightly
         env: COVERAGE=1
         sudo: required
 
@@ -47,3 +51,6 @@ before_script:
 
 script:
   - ./ci/script.sh
+env:
+  global:
+    secure: Gkb5+OxlL9yrB86RfDHrQF5lFsGP0h4816+P8CvrO1oMBoR6AMlBq0/jfzaNsi4exeij/FD7ELcbsS5dNLW6ayYUgbO4Ql+zkGOu88d2M7ZMZvoYpkYWzMNxTIxkIZxsYmQ3OG0LtpEmuPbkUYYlU49QZqt+xx7+SvA+qfWd9s8=

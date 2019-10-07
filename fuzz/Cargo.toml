@@ -21,8 +21,8 @@ members = ["."]
 
 [[bin]]
 name = "fuzz-kth"
-path = "fuzz_targets/fuzz-kth.rs"
+path = "fuzz_targets/fuzz_kth.rs"
 
 [[bin]]
 name = "fuzz-mom"
-path = "fuzz_targets/fuzz-mom.rs"
+path = "fuzz_targets/fuzz_mom.rs"
