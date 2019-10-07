@@ -41,7 +41,7 @@ if [ ! -z "$FUZZ" ]; then
     ./ci/fuzzit.sh local-regression
 
     branch=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-    if [ "$branch" = "master" ]; then
+    if [ "$branch" = "fuzz" ]; then # FIXME: "master"
         # a build on master, so let's update the long-running jobs
         ./ci/fuzzit.sh fuzzing
     fi
