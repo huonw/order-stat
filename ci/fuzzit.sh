@@ -27,6 +27,8 @@ if [[ ! -f fuzzit || ! `./fuzzit --version` =~ $FUZZIT_VERSION$ ]]; then
 fi
 ./fuzzit --version
 
+cargo install -v cargo-fuzz || echo "cargo-fuzz already installed"
+
 # Fuzz
 function fuzz {
     FUZZER=$1
