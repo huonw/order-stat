@@ -27,21 +27,26 @@ pub fn select<T: Ord>(x: &mut [T], k: usize) {
 }
 
 fn partition<T: Ord>(x: &mut [T]) -> usize {
-    let l = x.len();
-    let mut store = 0;
-    {
-        let (y, elem) = x.split_at_mut(l - 1);
-        let elem = &mut elem[0];
-
-        for load in 0..l - 1 {
-            if y[load] < *elem {
-                y.swap(load, store);
-                store += 1
-            }
+    let mut a = 1;
+    let mut b = x.len() - 1;
+    
+    'outer: loop {
+        loop {
+            if a > b { break 'outer; }
+            if x[a] >= x[0] { break; }
+            a += 1;
         }
+        while x[0] < x[b] {
+            b -= 1;
+        }
+        if a >= b { break; }
+        
+        x.swap(a, b);
+        a += 1;
+        b -= 1;
     }
-    x.swap(store, l - 1);
-    store
+    x.swap(0, a - 1);
+    a - 1
 }
 
 #[cfg(test)]
