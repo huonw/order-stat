@@ -42,11 +42,16 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
             left
         };
 
-        // need to cancel the borrow (but the assertion above ensures this doesn't alias)
-        let t = &array[t_idx] as *const _;
+        // Need to do this without borrowing (but the assertion above ensures this doesn't alias).
+        // This code has been modified throughout to use pointer addition rather than
+        // `array.get_unchecked_mut(x)` as the latter causes `t` to alias with the `&mut array`
+        // borrow that requires.
+        let arr_ptr = array.as_mut_ptr();
+        // We can be extra sure that we don't borrow `array` here.
+        let t = unsafe { &*arr_ptr.add(t_idx) };
         unsafe {
-            while cmp(&*array.get_unchecked(i), &*t) == Ordering::Less { i += 1 }
-            while cmp(&*array.get_unchecked(j), &*t) == Ordering::Greater { j -= 1 }
+            while cmp(&*arr_ptr.add(i), t) == Ordering::Less { i += 1 }
+            while cmp(&*arr_ptr.add(j), t) == Ordering::Greater { j -= 1 }
         }
 
         if i < j {
@@ -57,15 +62,14 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
             // FIXME: this unsafe code *should* be unnecessary: the
             // assertions above mean that LLVM could theoretically
             // optimise out the bounds checks, but it doesn't seem to
-            // at the moment (2015-04-25).
+            // at the moment (it still does not, 2023-07-29).
             unsafe {
                 while i < j {
-                    ptr::swap(array.get_unchecked_mut(i),
-                              array.get_unchecked_mut(j));
+                    ptr::swap(arr_ptr.add(i), arr_ptr.add(j));
                     i += 1;
                     j -= 1;
-                    while cmp(&*array.get_unchecked(i), &*t) == Ordering::Less { i += 1 }
-                    while cmp(&*array.get_unchecked(j), &*t) == Ordering::Greater { j -= 1 }
+                    while cmp(&*arr_ptr.add(i), t) == Ordering::Less { i += 1 }
+                    while cmp(&*arr_ptr.add(j), t) == Ordering::Greater { j -= 1 }
                 }
             }
         }
