@@ -1,9 +1,9 @@
-use std::cmp::Ordering;
+use std::cmp::Ordering::{self, Greater, Less};
 use std::{cmp, ptr};
 
 pub fn select<T, F>(array: &mut [T], k: usize, mut f: F)
 where
-    F: FnMut(&T, &T) -> cmp::Ordering,
+    F: FnMut(&T, &T) -> Ordering,
 {
     let r = array.len() - 1;
     select_(array, &mut f, 0, r, k)
@@ -14,7 +14,7 @@ const B: f32 = 0.5;
 
 fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize, k: usize)
 where
-    F: FnMut(&T, &T) -> cmp::Ordering,
+    F: FnMut(&T, &T) -> Ordering,
 {
     let array = array;
     while right > left {
@@ -37,7 +37,7 @@ where
         let mut i = left + 1;
         let mut j = right - 1;
         array.swap(left, k);
-        let t_idx = if cmp(&array[left], &array[right]) != cmp::Ordering::Less {
+        let t_idx = if cmp(&array[left], &array[right]) != Less {
             array.swap(left, right);
             right
         } else {
@@ -52,10 +52,10 @@ where
         // We can be extra sure that we don't borrow `array` here.
         let t = unsafe { &*arr_ptr.add(t_idx) };
         unsafe {
-            while cmp(&*arr_ptr.add(i), t) == Ordering::Less {
+            while cmp(&*arr_ptr.add(i), t) == Less {
                 i += 1
             }
-            while cmp(&*arr_ptr.add(j), t) == Ordering::Greater {
+            while cmp(&*arr_ptr.add(j), t) == Greater {
                 j -= 1
             }
         }
@@ -74,10 +74,10 @@ where
                     ptr::swap(arr_ptr.add(i), arr_ptr.add(j));
                     i += 1;
                     j -= 1;
-                    while cmp(&*arr_ptr.add(i), t) == Ordering::Less {
+                    while cmp(&*arr_ptr.add(i), t) == Less {
                         i += 1
                     }
-                    while cmp(&*arr_ptr.add(j), t) == Ordering::Greater {
+                    while cmp(&*arr_ptr.add(j), t) == Greater {
                         j -= 1
                     }
                 }
@@ -101,9 +101,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::select;
     use quickcheck::{self, TestResult};
     use rand::{Rng, XorShiftRng};
+
+    use super::select;
 
     #[test]
     fn qc() {
