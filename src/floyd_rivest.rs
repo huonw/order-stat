@@ -1,8 +1,9 @@
-use std::{cmp, ptr};
 use std::cmp::Ordering;
+use std::{cmp, ptr};
 
 pub fn select<T, F>(array: &mut [T], k: usize, mut f: F)
-    where F: FnMut(&T, &T) -> cmp::Ordering
+where
+    F: FnMut(&T, &T) -> cmp::Ordering,
 {
     let r = array.len() - 1;
     select_(array, &mut f, 0, r, k)
@@ -12,7 +13,8 @@ const A: usize = 600;
 const B: f32 = 0.5;
 
 fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize, k: usize)
-    where F: FnMut(&T, &T) -> cmp::Ordering
+where
+    F: FnMut(&T, &T) -> cmp::Ordering,
 {
     let array = array;
     while right > left {
@@ -50,8 +52,12 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
         // We can be extra sure that we don't borrow `array` here.
         let t = unsafe { &*arr_ptr.add(t_idx) };
         unsafe {
-            while cmp(&*arr_ptr.add(i), t) == Ordering::Less { i += 1 }
-            while cmp(&*arr_ptr.add(j), t) == Ordering::Greater { j -= 1 }
+            while cmp(&*arr_ptr.add(i), t) == Ordering::Less {
+                i += 1
+            }
+            while cmp(&*arr_ptr.add(j), t) == Ordering::Greater {
+                j -= 1
+            }
         }
 
         if i < j {
@@ -68,8 +74,12 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
                     ptr::swap(arr_ptr.add(i), arr_ptr.add(j));
                     i += 1;
                     j -= 1;
-                    while cmp(&*arr_ptr.add(i), t) == Ordering::Less { i += 1 }
-                    while cmp(&*arr_ptr.add(j), t) == Ordering::Greater { j -= 1 }
+                    while cmp(&*arr_ptr.add(i), t) == Ordering::Less {
+                        i += 1
+                    }
+                    while cmp(&*arr_ptr.add(j), t) == Ordering::Greater {
+                        j -= 1
+                    }
                 }
             }
         }
@@ -80,8 +90,12 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
             j += 1;
             array.swap(right, j);
         }
-        if j <= k { left = j + 1 }
-        if k <= j { right = j.saturating_sub(1); }
+        if j <= k {
+            left = j + 1
+        }
+        if k <= j {
+            right = j.saturating_sub(1);
+        }
     }
 }
 
@@ -89,7 +103,7 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
 mod tests {
     use super::select;
     use quickcheck::{self, TestResult};
-    use rand::{XorShiftRng, Rng};
+    use rand::{Rng, XorShiftRng};
 
     #[test]
     fn qc() {
@@ -114,6 +128,7 @@ mod tests {
             assert_eq!(array[k], k);
         }
     }
+
     #[test]
     fn huge() {
         let mut rng = XorShiftRng::new_unseeded();
