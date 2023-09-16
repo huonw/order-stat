@@ -1,8 +1,9 @@
+use std::cmp::Ordering::{self, Greater, Less};
 use std::{cmp, ptr};
-use std::cmp::Ordering;
 
 pub fn select<T, F>(array: &mut [T], k: usize, mut f: F)
-    where F: FnMut(&T, &T) -> cmp::Ordering
+where
+    F: FnMut(&T, &T) -> Ordering,
 {
     let r = array.len() - 1;
     select_(array, &mut f, 0, r, k)
@@ -12,9 +13,9 @@ const A: usize = 600;
 const B: f32 = 0.5;
 
 fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize, k: usize)
-    where F: FnMut(&T, &T) -> cmp::Ordering
+where
+    F: FnMut(&T, &T) -> Ordering,
 {
-    let array = array;
     while right > left {
         if right - left > A {
             let n = (right - left + 1) as f32;
@@ -35,18 +36,27 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
         let mut i = left + 1;
         let mut j = right - 1;
         array.swap(left, k);
-        let t_idx = if cmp(&array[left], &array[right]) != cmp::Ordering::Less {
+        let t_idx = if cmp(&array[left], &array[right]) != Less {
             array.swap(left, right);
             right
         } else {
             left
         };
 
-        // need to cancel the borrow (but the assertion above ensures this doesn't alias)
-        let t = &array[t_idx] as *const _;
+        // Need to do this without borrowing (but the assertion above ensures this doesn't alias).
+        // This code has been modified throughout to use pointer addition rather than
+        // `array.get_unchecked_mut(x)` as the latter causes `t` to alias with the `&mut array`
+        // borrow that requires.
+        let arr_ptr = array.as_mut_ptr();
+        // We can be extra sure that we don't borrow `array` here.
+        let t = unsafe { &*arr_ptr.add(t_idx) };
         unsafe {
-            while cmp(&*array.get_unchecked(i), &*t) == Ordering::Less { i += 1 }
-            while cmp(&*array.get_unchecked(j), &*t) == Ordering::Greater { j -= 1 }
+            while cmp(&*arr_ptr.add(i), t) == Less {
+                i += 1
+            }
+            while cmp(&*arr_ptr.add(j), t) == Greater {
+                j -= 1
+            }
         }
 
         if i < j {
@@ -57,15 +67,18 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
             // FIXME: this unsafe code *should* be unnecessary: the
             // assertions above mean that LLVM could theoretically
             // optimise out the bounds checks, but it doesn't seem to
-            // at the moment (2015-04-25).
+            // at the moment (it still does not, 2023-07-29).
             unsafe {
                 while i < j {
-                    ptr::swap(array.get_unchecked_mut(i),
-                              array.get_unchecked_mut(j));
+                    ptr::swap(arr_ptr.add(i), arr_ptr.add(j));
                     i += 1;
                     j -= 1;
-                    while cmp(&*array.get_unchecked(i), &*t) == Ordering::Less { i += 1 }
-                    while cmp(&*array.get_unchecked(j), &*t) == Ordering::Greater { j -= 1 }
+                    while cmp(&*arr_ptr.add(i), t) == Less {
+                        i += 1
+                    }
+                    while cmp(&*arr_ptr.add(j), t) == Greater {
+                        j -= 1
+                    }
                 }
             }
         }
@@ -76,16 +89,21 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
             j += 1;
             array.swap(right, j);
         }
-        if j <= k { left = j + 1 }
-        if k <= j { right = j.saturating_sub(1); }
+        if j <= k {
+            left = j + 1
+        }
+        if k <= j {
+            right = j.saturating_sub(1);
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::select;
     use quickcheck::{self, TestResult};
-    use rand::{XorShiftRng, Rng};
+    use rand::{Rng, XorShiftRng};
+
+    use super::select;
 
     #[test]
     fn qc() {
@@ -110,6 +128,7 @@ mod tests {
             assert_eq!(array[k], k);
         }
     }
+
     #[test]
     fn huge() {
         let mut rng = XorShiftRng::new_unseeded();
