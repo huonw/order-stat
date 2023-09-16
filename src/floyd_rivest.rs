@@ -16,7 +16,6 @@ fn select_<T, F>(array: &mut [T], cmp: &mut F, mut left: usize, mut right: usize
 where
     F: FnMut(&T, &T) -> Ordering,
 {
-    let array = array;
     while right > left {
         if right - left > A {
             let n = (right - left + 1) as f32;
